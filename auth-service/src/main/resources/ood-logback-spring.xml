@@ -1,0 +1,41 @@
+<!--<configuration>-->
+
+<!--    <contextName>auth-service</contextName>-->
+
+<!--    <conversionRule conversionWord="clr" class="org.springframework.boot.logging.logback.ColorConverter"/>-->
+<!--    <conversionRule conversionWord="wex" class="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>-->
+<!--    <conversionRule conversionWord="wEx" class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>-->
+
+<!--    &lt;!&ndash; Console appender &ndash;&gt;-->
+<!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        <encoder>-->
+<!--            <pattern>%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr([%thread]){faint} %clr(%-5level) %clr(%logger{36}){cyan} - %msg%n%wEx</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
+
+<!--    &lt;!&ndash; Loki4j appender &ndash;&gt;-->
+
+<!--    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">-->
+<!--        <http>-->
+<!--            <url>http://host.docker.internal:3100/loki/api/v1/push</url>-->
+<!--        </http>-->
+<!--        <label>-->
+<!--            <app>auth-service</app>-->
+<!--            <compose_service>app-auth-service</compose_service>-->
+<!--            <service_name>auth-service</service_name>-->
+<!--            <agent>loki4j</agent>-->
+<!--        </label>-->
+<!--        <layout class="ch.qos.logback.classic.PatternLayout">-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} | [%thread] | %-5level | %logger{36} | %msg%n</pattern>-->
+<!--        </layout>-->
+<!--        <batchSize>1</batchSize>-->
+<!--        <batchTimeoutMs>1000</batchTimeoutMs>-->
+<!--        <maxRetries>3</maxRetries>-->
+<!--    </appender>-->
+
+<!--    <root level="INFO">-->
+<!--        <appender-ref ref="CONSOLE"/>-->
+<!--        <appender-ref ref="LOKI"/>-->
+<!--    </root>-->
+
+<!--</configuration>-->
