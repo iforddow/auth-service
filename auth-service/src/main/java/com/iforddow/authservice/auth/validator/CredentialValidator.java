@@ -1,7 +1,6 @@
 package com.iforddow.authservice.auth.validator;
 
 import com.iforddow.authservice.auth.entity.jpa.Account;
-import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authservice.common.exception.ResourceNotFoundException;
 import com.iforddow.authservice.common.utility.AuthServiceUtility;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class CredentialValidator {
 
-    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
 
     public boolean validate(Account account, String password) {

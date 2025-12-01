@@ -3,7 +3,6 @@ package com.iforddow.authservice.auth.controller;
 import com.iforddow.authservice.auth.request.*;
 import com.iforddow.authservice.auth.service.*;
 import com.iforddow.authservice.common.utility.AuthServiceUtility;
-import com.iforddow.authservice.common.utility.SessionUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +29,6 @@ public class AuthController {
     private final LogoutService logoutService;
     private final PasswordService passwordService;
 
-    SessionUtility sessionUtility = new SessionUtility();
-
     /**
      * An endpoint for accessing the registration method.
      *
@@ -44,10 +41,7 @@ public class AuthController {
             @RequestBody RegisterRequest registerRequest,
             HttpServletRequest request) {
 
-        // Ensure there is only one session token from either cookie or header
-        String existingToken = sessionUtility.validateIncomingSession(request);
-
-        registerService.register(registerRequest, existingToken, request);
+        registerService.register(registerRequest, request);
 
         return ResponseEntity.ok().build();
 
@@ -84,10 +78,8 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        String existingToken = sessionUtility.validateIncomingSession(request);
-
         try {
-            logoutService.logout(logoutRequest, existingToken, response);
+            logoutService.logout(logoutRequest, response);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

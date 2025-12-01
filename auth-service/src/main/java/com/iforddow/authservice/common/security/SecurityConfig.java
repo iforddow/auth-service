@@ -1,6 +1,5 @@
 package com.iforddow.authservice.common.security;
 
-import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +13,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
 * A configuration class for application security.
@@ -28,8 +26,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final SessionRepository sessionRepository;
-
     /**
     * Bean implements a security filter chain, allowing certain routes
     * to be accessed.
@@ -38,7 +34,7 @@ public class SecurityConfig {
     * @since 2025-10-27
     * */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SessionFilter sessionFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -47,7 +43,6 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/actuator/**").permitAll()
                                 .anyRequest().authenticated())
-                .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
@@ -73,17 +68,6 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    /**
-    * A bean to initialize the SessionFilter.
-    *
-    * @author IFD
-    * @since 2025-10-27
-    * */
-    @Bean
-    public SessionFilter sessionFilter() {
-        return new SessionFilter(sessionRepository);
     }
 
 }

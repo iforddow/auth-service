@@ -25,7 +25,6 @@ public class RegisterService {
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final RegistrationValidator registrationValidator;
 
     /**
      * A method to handle account registration.
@@ -35,10 +34,7 @@ public class RegisterService {
      * @since 2025-06-14
      */
     @Transactional
-    public void register(RegisterRequest registerRequest, String existingToken, HttpServletRequest httpRequest) {
-
-        // Validate the registration details
-        registrationValidator.validateRegistrationRequest(registerRequest, existingToken);
+    public void register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
 
         // If we get to this point, all validations have passed, and we
         // are ready to create the new account.

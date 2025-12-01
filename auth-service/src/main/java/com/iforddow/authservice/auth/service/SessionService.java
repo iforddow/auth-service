@@ -1,11 +1,12 @@
 package com.iforddow.authservice.auth.service;
 
+import com.iforddow.authservice.SessionFactory;
 import com.iforddow.authservice.auth.entity.jpa.Account;
-import com.iforddow.authservice.auth.entity.entity.Session;
-import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import com.iforddow.authservice.common.exception.BadRequestException;
-import com.iforddow.authservice.common.utility.AuthServiceUtility;
-import com.iforddow.authservice.common.utility.SessionUtility;
+import com.iforddow.authsession.entity.Session;
+import com.iforddow.authsession.repository.SessionRepository;
+import com.iforddow.authsession.utility.FilterUtility;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A service class for the token service in the application.
@@ -30,7 +30,7 @@ public class SessionService {
 
     private final SessionRepository sessionRepository;
 
-    SessionUtility sessionUtility = new SessionUtility();
+    private final FilterUtility filterUtility;
 
     @Value("${session.ttl.seconds}")
     private long sessionTtlSeconds;
@@ -50,10 +50,10 @@ public class SessionService {
      * */
     public Session createSession(Account account, HttpServletRequest request) {
 
-        String currentSessionId = sessionUtility.validateIncomingSession(request);
+        String sessionId = filterUtility.getIncomingSessionId(request);
 
-        if(currentSessionId != null) {
-            throw new BadRequestException("Cannot create a new session while another session token is present");
+        if(sessionId != null) {
+            throw new BadRequestException("Cannot create session when one already exists");
         }
 
         // Enforce maximum sessions per account
@@ -69,7 +69,7 @@ public class SessionService {
                         .orElseThrow(() -> new BadRequestException("Unable to enforce session limit"));
 
                 // Delete the oldest session
-                sessionRepository.delete(oldestSession.getSessionId(), account.getId());
+                sessionRepository.delete(oldestSession.getSessionId());
 
             } while (activeSessions.size() > maxSessions);
         }
@@ -81,7 +81,7 @@ public class SessionService {
         Duration hardExpiry = Duration.ofSeconds(sessionHardExpirySeconds);
 
         // Create and save the new session
-        Session session = Session.newSession(account.getId(), ipAddress, userAgent, ttl, hardExpiry);
+        Session session = SessionFactory.newSession(account.getId(), ipAddress, userAgent, ttl, hardExpiry);
 
         sessionRepository.save(session);
 

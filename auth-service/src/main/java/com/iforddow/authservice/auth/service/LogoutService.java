@@ -31,7 +31,7 @@ public class LogoutService {
      * @author IFD
      * @since 2025-10-27
      */
-    public void logout(LogoutRequest logoutRequest, String existingToken, HttpServletResponse response) {
+    public void logout(LogoutRequest logoutRequest, HttpServletResponse response) {
 
         // Use try-finally to ensure cookie is removed
         try {

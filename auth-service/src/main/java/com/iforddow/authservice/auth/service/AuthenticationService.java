@@ -1,16 +1,15 @@
 package com.iforddow.authservice.auth.service;
 
 import com.iforddow.authservice.auth.entity.jpa.Account;
-import com.iforddow.authservice.auth.entity.entity.Session;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
-import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import com.iforddow.authservice.auth.request.LoginRequest;
 import com.iforddow.authservice.common.utility.DeviceType;
 import com.iforddow.authservice.auth.validator.CredentialValidator;
 import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authservice.common.exception.InvalidCredentialsException;
 import com.iforddow.authservice.common.exception.ResourceNotFoundException;
-import com.iforddow.authservice.common.utility.SessionUtility;
+import com.iforddow.authsession.entity.Session;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +21,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Optional;
 
 /**
  * A service class for account login methods.
@@ -38,7 +36,6 @@ public class AuthenticationService {
     private final AccountRepository accountRepository;
     private final SessionService sessionService;
     private final CredentialValidator credentialValidator;
-    private final SessionRepository sessionRepository;
 
     @Value("${session.cookie.name}")
     private String cookieName;

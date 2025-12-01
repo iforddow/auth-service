@@ -1,16 +1,16 @@
 // Java
 package com.iforddow.authservice.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.iforddow.authservice.auth.entity.entity.Session;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.serializer.*;
+import tools.jackson.databind.ObjectMapper;
+
+import java.time.Duration;
 
 /**
 * A configuration class for Redis and Redis templates.
@@ -20,6 +20,21 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 * */
 @Configuration
 public class RedisConfig {
+
+
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJacksonJsonRedisSerializer(objectMapper)))
+                .disableCachingNullValues();
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(config)
+                .transactionAware()
+                .build();
+    }
 
     /**
     * A RedisTemplate bean for general Object storage.
@@ -32,19 +47,12 @@ public class RedisConfig {
     * @since 2025-11-17
     * */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(factory);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL
-        );
-
-        Jackson2JsonRedisSerializer<Object> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
+        JacksonJsonRedisSerializer<Object> serializer =
+                new JacksonJsonRedisSerializer<>(objectMapper, Object.class);
 
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(serializer);
@@ -63,11 +71,11 @@ public class RedisConfig {
      * @return RedisTemplate<String, Session>
      * @author IFD
      * */
-    @Bean
-    public RedisTemplate<String, Session> sessionRedisTemplate(RedisConnectionFactory factory,
-                                                               ObjectMapper objectMapper) {
-        return buildTypedTemplate(factory, objectMapper, Session.class);
-    }
+//    @Bean
+//    public RedisTemplate<String, Session> sessionRedisTemplate(RedisConnectionFactory factory,
+//                                                               ObjectMapper objectMapper) {
+//        return buildTypedTemplate(factory, objectMapper, Session.class);
+//    }
 
     /**
      * A method to build a typed RedisTemplate.
@@ -87,8 +95,8 @@ public class RedisConfig {
         RedisTemplate<String, T> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
 
-        Jackson2JsonRedisSerializer<T> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, clazz);
+        JacksonJsonRedisSerializer<T> serializer =
+                new JacksonJsonRedisSerializer<>(objectMapper, clazz);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);
