@@ -1,5 +1,6 @@
 package com.iforddow.authservice.common.security;
 
+import com.iforddow.authsession.filter.AuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
 * A configuration class for application security.
@@ -25,6 +27,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final AuthFilter authFilter;
 
     /**
     * Bean implements a security filter chain, allowing certain routes
@@ -41,8 +45,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests((requests) ->
                         requests
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/auth/password/**").permitAll()
                                 .requestMatchers("/actuator/**").permitAll()
                                 .anyRequest().authenticated())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

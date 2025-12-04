@@ -1,5 +1,7 @@
 package com.iforddow.authservice.auth.repository.redis;
 
+import com.iforddow.authservice.common.exception.ResourceNotFoundException;
+import com.iforddow.authservice.common.utility.HashUtility;
 import com.iforddow.authsession.common.AuthProperties;
 import com.iforddow.authsession.entity.Session;
 import com.iforddow.authsession.repository.SessionRepository;
@@ -28,6 +30,7 @@ public class SessionRepositoryImpl implements SessionRepository {
     private final AuthProperties authProperties;
     private final RedisTemplate<String,Session> sessionRedisTemplate;
     private final StringRedisTemplate stringRedisTemplate;
+    private final HashUtility hashUtility;
 
     /**
     * A method to find a session by its ID.
@@ -40,7 +43,10 @@ public class SessionRepositoryImpl implements SessionRepository {
     * */
     @Override
     public Session findById(String sessionId) {
-        String key = authProperties.getSessionPrefix() + sessionId;
+
+        String hashedSessionId = hashUtility.hmacSha256(sessionId);
+
+        String key = authProperties.getSessionPrefix() + hashedSessionId;
         return sessionRedisTemplate.opsForValue().get(key);
     }
 
@@ -54,45 +60,27 @@ public class SessionRepositoryImpl implements SessionRepository {
     * */
     @Override
     public void save(Session session) {
-        String sessionKey = authProperties.getSessionPrefix() + session.getSessionId();
-        String userSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId().toString();
+
+        Session newSession = new Session(
+                hashUtility.hmacSha256(session.getSessionId()),
+                session.getAccountId(),
+                session.getCreatedAt(),
+                session.getIp(),
+                session.getUserAgent(),
+                session.getExpiresAt(),
+                session.getHardExpiration()
+        );
+
+        String sessionKey = authProperties.getSessionPrefix() + newSession.getSessionId();
+        String userSessionsKey = authProperties.getAccountSessionPrefix() + newSession.getAccountId().toString();
 
         // Save session object in Redis
-        sessionRedisTemplate.opsForValue().set(sessionKey, session);
-        sessionRedisTemplate.expireAt(sessionKey, session.getExpiresAt());
+        sessionRedisTemplate.opsForValue().set(sessionKey, newSession);
+        sessionRedisTemplate.expireAt(sessionKey, newSession.getHardExpiration());
 
         // Add session ID to the user's set of sessions
-        stringRedisTemplate.opsForSet().add(userSessionsKey, session.getSessionId());
-        stringRedisTemplate.expireAt(userSessionsKey, session.getHardExpiration());
-    }
-
-    /**
-    * A method to delete a session by its ID.
-    *
-    * @param sessionId The ID of the session to be deleted.
-    *
-    * @author IFD
-    * @since 2025-11-30
-    * */
-    @Override
-    public void delete(String sessionId) {
-        String key = authProperties.getSessionPrefix() + sessionId;
-        sessionRedisTemplate.delete(key);
-        stringRedisTemplate.opsForSet().remove(authProperties.getAccountSessionPrefix() + sessionId);
-    }
-
-    /**
-    * A method to delete a session by its object.
-    *
-    * @param session The session object to be deleted.
-    *
-    * @author IFD
-    * @since 2025-11-30
-    * */
-    @Override
-    public void delete(Session session) {
-        String sessionId = session.getSessionId();
-        delete(sessionId);
+        stringRedisTemplate.opsForSet().add(userSessionsKey, newSession.getSessionId());
+        stringRedisTemplate.expireAt(userSessionsKey, newSession.getHardExpiration());
     }
 
     /**
@@ -144,6 +132,63 @@ public class SessionRepositoryImpl implements SessionRepository {
         return sessions.stream()
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    /**
+     * A method to delete a session by its ID.
+     *
+     * @param sessionId The ID of the session to be deleted.
+     *
+     * @author IFD
+     * @since 2025-11-30
+     * */
+    @Override
+    public void delete(String sessionId) {
+
+        System.out.println("Deleting session with ID (String): " + sessionId);
+
+        String hashedSessionId = hashUtility.hmacSha256(sessionId);
+
+        Session session = findById(hashedSessionId);
+
+        if(session == null) {
+            throw new ResourceNotFoundException("Session not found");
+        }
+
+        String key = authProperties.getSessionPrefix() + hashedSessionId;
+        sessionRedisTemplate.delete(key);
+
+        String accountSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId();
+        stringRedisTemplate.opsForSet().remove(accountSessionsKey, hashedSessionId);
+    }
+
+    /**
+     * A method to delete a session by its object.
+     *
+     * @param session The session object to be deleted.
+     *
+     * @author IFD
+     * @since 2025-11-30
+     * */
+    @Override
+    public void delete(Session session) {
+        String hashedSessionId = session.getSessionId();
+
+        String key = authProperties.getSessionPrefix() + hashedSessionId;
+        sessionRedisTemplate.delete(key);
+
+        String accountSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId();
+        stringRedisTemplate.opsForSet().remove(accountSessionsKey, hashedSessionId);
+    }
+
+    @Override
+    public void deleteAllByAccountId(UUID accountId) {
+
+        List<Session> sessions = findAllByAccountId(accountId);
+        for(Session session : sessions) {
+            delete(session);
+        }
+
     }
 
 }

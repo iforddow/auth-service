@@ -2,12 +2,12 @@ package com.iforddow.authservice.auth.controller;
 
 import com.iforddow.authservice.auth.request.*;
 import com.iforddow.authservice.auth.service.*;
-import com.iforddow.authservice.common.utility.AuthServiceUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AuthController {
 
-    private final RegisterService registerService;
+    private final RegistrationService registrationService;
     private final AuthenticationService authenticationService;
     private final DeleteAccountService deleteAccountService;
     private final LogoutService logoutService;
@@ -37,14 +37,11 @@ public class AuthController {
      *
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(
-            @RequestBody RegisterRequest registerRequest,
-            HttpServletRequest request) {
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
 
-        registerService.register(registerRequest, request);
+        registrationService.register(registerRequest, request);
 
         return ResponseEntity.ok().build();
-
     }
 
     /**
@@ -55,15 +52,11 @@ public class AuthController {
      *
      */
     @PostMapping("/authenticate")
-    public ResponseEntity<?> authenticate(
-            @RequestBody LoginRequest loginRequest,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<?> authenticate(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
 
         String loginResult = authenticationService.authenticate(loginRequest, request, response);
 
         return ResponseEntity.ok(loginResult);
-
     }
 
     /**
@@ -73,18 +66,11 @@ public class AuthController {
     * @since 2025-11-02
     * */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
-            @RequestBody LogoutRequest logoutRequest,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<?> logout(@RequestBody LogoutRequest logoutRequest, HttpServletRequest request, HttpServletResponse response) {
 
-        try {
-            logoutService.logout(logoutRequest, response);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        logoutService.logout(logoutRequest, request, response);
 
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -95,40 +81,11 @@ public class AuthController {
      *
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteAccount(@CookieValue(value = "${session.cookie.name}", required = false) String cookieValue,
-                                           @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        try {
-            if(!AuthServiceUtility.isNullOrEmpty(cookieValue)) {
-                deleteAccountService.deleteAccount(cookieValue);
-            } else if(!AuthServiceUtility.isNullOrEmpty(authHeader)) {
-                deleteAccountService.deleteAccount(authHeader);
-            } else {
-                return ResponseEntity.badRequest().body("No authentication method provided");
-            }
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deleteAccount(HttpServletResponse response) {
 
-            return ResponseEntity.ok().body("Account deleted successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        deleteAccountService.deleteAccount(response);
 
-    }
-
-    /**
-    * An endpoint to change an account's password.
-    *
-    * @author IFD
-    * @since 2025-11-02
-    * */
-    @PostMapping("/change-password")
-    public ResponseEntity<?> changeAccountPassword(
-                                                   @RequestBody ChangePasswordRequest changePasswordRequest) {
-
-        try {
-            passwordService.changeAccountPassword(changePasswordRequest);
-            return ResponseEntity.ok().body("Password changed successfully");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Unable to change password: " + e.getMessage());
-        }
-
+        return ResponseEntity.ok("Account deleted successfully.");
     }
 }

@@ -1,6 +1,7 @@
 package com.iforddow.authservice.auth.service;
 
 import com.iforddow.authservice.auth.entity.jpa.Account;
+import com.iforddow.authservice.auth.factory.SessionFactory;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.auth.request.LoginRequest;
 import com.iforddow.authservice.common.utility.DeviceType;
@@ -9,7 +10,6 @@ import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authservice.common.exception.InvalidCredentialsException;
 import com.iforddow.authservice.common.exception.ResourceNotFoundException;
 import com.iforddow.authsession.entity.Session;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ import java.util.Collections;
 public class AuthenticationService {
 
     private final AccountRepository accountRepository;
-    private final SessionService sessionService;
+    private final SessionFactory sessionFactory;
     private final CredentialValidator credentialValidator;
 
     @Value("${session.cookie.name}")
@@ -65,7 +65,7 @@ public class AuthenticationService {
         }
 
         // Create new session for the account
-        Session newSession = sessionService.createSession(account, request);
+        Session newSession = sessionFactory.createAccountSession(account, request);
 
         // Create authentication token and set in security context
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

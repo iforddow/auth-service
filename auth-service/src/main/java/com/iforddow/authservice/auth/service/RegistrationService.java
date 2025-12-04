@@ -4,7 +4,6 @@ import com.iforddow.authservice.application.events.RegistrationEvent;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.auth.request.RegisterRequest;
-import com.iforddow.authservice.auth.validator.RegistrationValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,7 @@ import org.springframework.stereotype.Service;
 * */
 @RequiredArgsConstructor
 @Service
-public class RegisterService {
+public class RegistrationService {
 
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;

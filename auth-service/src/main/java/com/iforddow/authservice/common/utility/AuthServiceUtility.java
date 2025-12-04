@@ -1,5 +1,10 @@
 package com.iforddow.authservice.common.utility;
 
+import com.iforddow.authservice.common.exception.BadRequestException;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.UUID;
+
 /**
 * A utility class implementing useful methods that
 * can be used throughout the application.
@@ -17,6 +22,24 @@ public class AuthServiceUtility {
     * */
     public static boolean isNullOrEmpty(String string) {
         return string == null || string.isEmpty();
+    }
+
+    /**
+     * A private method to get the currently authenticated account ID.
+     *
+     * @return The UUID of the currently authenticated account.
+     *
+     * @author IFD
+     * @since 2025-12-03
+     * */
+    public static UUID getAuthentication() {
+        // Get the currently authenticated account ID
+        if(SecurityContextHolder.getContext().getAuthentication() == null || SecurityContextHolder.getContext().getAuthentication().getPrincipal() == null) {
+            throw new BadRequestException("No authentication information found.");
+        }
+
+        // Get account ID from security context
+        return UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
     }
 
 }
