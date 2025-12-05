@@ -46,6 +46,8 @@ public class SecurityConfig {
                         requests
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/auth/password/**").permitAll()
+                                .requestMatchers("/api/auth/email/**").permitAll()
+                                .requestMatchers("/api/auth/account/**").permitAll()
                                 .requestMatchers("/actuator/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)

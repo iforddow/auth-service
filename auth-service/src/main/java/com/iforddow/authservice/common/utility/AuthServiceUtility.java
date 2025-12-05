@@ -39,7 +39,15 @@ public class AuthServiceUtility {
         }
 
         // Get account ID from security context
-        return UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        UUID accountId;
+
+        try {
+            accountId = UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid authentication information found.");
+        }
+
+        return accountId;
     }
 
 }

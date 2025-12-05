@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -25,9 +24,7 @@ public class AuthController {
 
     private final RegistrationService registrationService;
     private final AuthenticationService authenticationService;
-    private final DeleteAccountService deleteAccountService;
     private final LogoutService logoutService;
-    private final PasswordService passwordService;
 
     /**
      * An endpoint for accessing the registration method.
@@ -71,21 +68,5 @@ public class AuthController {
         logoutService.logout(logoutRequest, request, response);
 
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * An endpoint for accessing the delete account method.
-     *
-     * @author IFD
-     * @since 2025-10-29
-     *
-     */
-    @DeleteMapping("/delete")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> deleteAccount(HttpServletResponse response) {
-
-        deleteAccountService.deleteAccount(response);
-
-        return ResponseEntity.ok("Account deleted successfully.");
     }
 }

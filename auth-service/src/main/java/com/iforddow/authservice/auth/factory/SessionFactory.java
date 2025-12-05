@@ -127,18 +127,14 @@ public class SessionFactory {
         List<Session> activeSessions = sessionRepository.findAllByAccountId(account.getId());
 
         // If over the limit, delete the oldest sessions
-        if(activeSessions.size() > maxSessions) {
-            // Keep deleting the oldest sessions until under the limit
-            do {
-                // Find the oldest session
-                Session oldestSession = activeSessions.stream()
-                        .min(Comparator.comparing(Session::getCreatedAt))
-                        .orElseThrow(() -> new BadRequestException("Unable to enforce session limit"));
+        while (activeSessions.size() > maxSessions && maxSessions != -1) {
+            // Find the oldest session
+            Session oldestSession = activeSessions.stream()
+                    .min(Comparator.comparing(Session::getCreatedAt))
+                    .orElseThrow(() -> new BadRequestException("Unable to enforce session limit"));
 
-                // Delete the oldest session
-                sessionRepository.delete(oldestSession.getSessionId());
-
-            } while (activeSessions.size() > maxSessions);
+            // Delete the oldest session
+            sessionRepository.delete(oldestSession.getSessionId());
         }
 
         // Get information required for the session

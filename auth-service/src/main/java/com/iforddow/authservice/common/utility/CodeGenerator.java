@@ -2,7 +2,7 @@ package com.iforddow.authservice.common.utility;
 
 public class CodeGenerator {
 
-    public static String generateVerificationCode() {
+    public static String generateRandomCode() {
         int length = 6;
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < length; i++) {

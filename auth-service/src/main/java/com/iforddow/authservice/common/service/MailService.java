@@ -25,48 +25,9 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 public class MailService {
 
     private final JavaMailSender mailSender;
-    private final SpringTemplateEngine templateEngine;
 
     @Value("${mail.sender}")
     private String emailSender;
-
-    /**
-    * A method to send a new account email
-    *
-    * @author IFD
-    * @since 2025-10-27
-    * */
-    public void sendNewAccountEmail(String to, String verificationLink) throws MessagingException, MailException {
-
-        Context context = new Context();
-        context.setVariable("verificationLink", verificationLink);
-
-        String content = templateEngine.process("email/new-account-email", context);
-
-        sendMailTemplate(to, "Welcome to AuthService - Verify Your Email", content);
-
-    }
-
-    /**
-     * A method to send a new account email
-     *
-     * @author IFD
-     * @since 2025-10-27
-     * */
-    public void sendPasswordResetCodeEmail(String to, String resetCode, int expiresInSeconds) {
-
-        Context context = new Context();
-        context.setVariable("resetCode", resetCode);
-
-        int expiresIn = expiresInSeconds / 60;
-
-        context.setVariable("expiresIn", expiresIn);
-
-        String content = templateEngine.process("email/password-reset-code", context);
-
-        sendMailTemplate(to, "Password Reset Request",content);
-
-    }
 
     /**
     * A method to send an email with HTML template

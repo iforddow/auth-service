@@ -7,10 +7,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/password")
@@ -41,9 +38,9 @@ public class PasswordController {
      * @since 2025-12-03
      * */
     @PostMapping("/init-reset-password")
-    public ResponseEntity<?> initiatePasswordReset() {
+    public ResponseEntity<?> initiatePasswordReset(@RequestParam String email) {
 
-        passwordService.initiatePasswordReset();
+        passwordService.initiatePasswordReset(email);
 
         return ResponseEntity.ok().body("Password reset initiated successfully");
     }

@@ -2,11 +2,14 @@ package com.iforddow.authservice.application.listeners;
 
 import com.iforddow.authservice.application.events.RegistrationEvent;
 import com.iforddow.authservice.auth.entity.jpa.Account;
+import com.iforddow.authservice.auth.service.EmailVerificationService;
+import com.iforddow.authservice.auth.service.RegistrationService;
 import com.iforddow.authservice.common.service.MailService;
 import com.iforddow.authservice.common.service.RabbitSenderService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -27,7 +30,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class RegistrationEventListener {
 
     private final RabbitSenderService rabbitSenderService;
-    private final MailService mailService;
+    private final EmailVerificationService emailVerificationService;
+    private final RegistrationService registrationService;
+
+    @Value("${frontend.base.url}")
+    private String frontendBaseUrl;
+
+    @Value("${frontend.email.verification.path}")
+    private String emailVerificationPath;
 
     /**
      * A method that handles registration events after
@@ -50,14 +60,15 @@ public class RegistrationEventListener {
         rabbitSenderService.sendNewAccountMessage(account.getId().toString());
 
         try {
-            mailService.sendNewAccountEmail(account.getEmail(), "https://auth.iforddow.com/login");
+            String verificationCode = emailVerificationService.createEmailVerificationCode(account.getEmail());
+
+            String verificationLink = frontendBaseUrl + emailVerificationPath + "?email=" + account.getEmail() + "&verificationCode=" + verificationCode;
+
+            registrationService.sendNewRegistrationEmail(account.getEmail(), verificationLink, verificationCode);
+
             log.info("New account email sent successfully to accountId={} email={}", account.getId(), account.getEmail());
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send new account email to {}: {}", account.getEmail(), e.getMessage());
-
-        } catch (MailException e) {
-            log.error("Mail service error when sending new account email to {}: {}", account.getEmail(), e.getMessage());
-
         }
 
     }

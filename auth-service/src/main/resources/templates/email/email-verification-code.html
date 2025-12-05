@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div
+        style='background-color:#F5F5F5;color:#262626;font-family:"Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0.15008px;line-height:1.5;margin:0;padding:32px 0;min-height:100%;width:100%'
+>
+    <table
+            align="center"
+            width="100%"
+            style="margin:0 auto;max-width:600px;background-color:#FFFFFF"
+            role="presentation"
+            cellspacing="0"
+            cellpadding="0"
+            border="0"
+    >
+        <tbody>
+        <tr style="width:100%">
+            <td>
+                <h2
+                        style="font-weight:bold;margin:0;font-size:24px;padding:16px 24px 16px 24px"
+                >
+                    Verify Your Email
+                </h2>
+                <div style="font-size:16px;padding:16px 24px 16px 24px">
+                    <div
+                            style="font-family: Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.5;"
+                    >
+                        <p>Hi,</p>
+
+                        <p>
+                            Please click the button below to verify your email address:
+                        </p>
+
+                        <div
+                                style="margin: 16px 0; padding: 12px 16px; background: #f4f4f4; border-radius: 6px; display: inline-block; font-size: 18px; font-weight: bold;"
+                                th:text="${verificationCode}"
+                        >
+                            VERIFICATION_LINK
+                        </div>
+
+                        <p>This link expires in <span th:text="${ttl}">N/A</span> minutes.</p>
+
+                        <p>
+                            If you didn't request a password reset, you can ignore this
+                            email.
+                        </p>
+
+                        <p>Thanks,<br />AuthService</p>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

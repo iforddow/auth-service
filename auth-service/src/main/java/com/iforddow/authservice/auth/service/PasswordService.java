@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,12 +39,13 @@ public class PasswordService {
     private final PasswordValidator passwordValidator;
     private final MailService mailService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final SpringTemplateEngine templateEngine;
 
-    @Value("${redis.verification.code.prefix}")
-    private String verificationCodePrefix;
+    @Value("${redis.password.reset.code.prefix}")
+    private String resetCodePrefix;
 
     @Value("${redis.password.reset.code.ttl.seconds}")
-    private int verificationCodeTtlSeconds;
+    private int resetCodeTtlSeconds;
 
     /**
     * A method to change the password of the currently authenticated account.
@@ -88,19 +91,16 @@ public class PasswordService {
     * @author IFD
     * @since 2025-12-03
     * */
-    public void initiatePasswordReset() {
-
-        // Get account ID from security context
-        UUID accountId = AuthServiceUtility.getAuthentication();
+    public void initiatePasswordReset(String email) {
 
         //Get account by ID
-        Account account = accountRepository.findById(accountId).orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        Account account = accountRepository.findAccountByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Account with provided email not found"));
 
         // Generate verification code
-        String generatedVerificationCode = CodeGenerator.generateVerificationCode();
+        String generatedVerificationCode = CodeGenerator.generateRandomCode();
 
         // Store verification code in Redis
-        String key = verificationCodePrefix + account.getId();
+        String key = resetCodePrefix + account.getId();
 
         // If key already exists, delete it first
         if(stringRedisTemplate.hasKey(key)) {
@@ -109,10 +109,10 @@ public class PasswordService {
 
         // Store the new code
         stringRedisTemplate.opsForValue().set(key, generatedVerificationCode);
-        stringRedisTemplate.expireAt(key, Instant.now().plusSeconds(verificationCodeTtlSeconds));
+        stringRedisTemplate.expireAt(key, Instant.now().plusSeconds(resetCodeTtlSeconds));
 
         // Send password reset email
-        mailService.sendPasswordResetCodeEmail(account.getEmail(), generatedVerificationCode, verificationCodeTtlSeconds);
+        sendPasswordResetCodeEmail(account.getEmail(), generatedVerificationCode, resetCodeTtlSeconds);
     }
 
     /**
@@ -130,7 +130,7 @@ public class PasswordService {
         UUID accountId = AuthServiceUtility.getAuthentication();
 
         // Get stored code from Redis
-        String key = verificationCodePrefix + accountId;
+        String key = resetCodePrefix + accountId;
 
         String storedCode = stringRedisTemplate.opsForValue().get(key);
 
@@ -181,6 +181,27 @@ public class PasswordService {
 
         // Save the updated account
         accountRepository.save(account);
+
+    }
+
+    /**
+     * A method to send a new account email
+     *
+     * @author IFD
+     * @since 2025-10-27
+     * */
+    public void sendPasswordResetCodeEmail(String to, String resetCode, int expiresInSeconds) {
+
+        Context context = new Context();
+        context.setVariable("resetCode", resetCode);
+
+        int expiresIn = expiresInSeconds / 60;
+
+        context.setVariable("expiresIn", expiresIn);
+
+        String content = templateEngine.process("email/password-reset-code", context);
+
+        mailService.sendMailTemplate(to, "Password Reset Request", content);
 
     }
 
