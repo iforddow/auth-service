@@ -65,4 +65,9 @@ public class Account {
     @Transient
     private List<String> authorities = new ArrayList<>();
 
+    @Builder.Default
+    @ColumnDefault("null")
+    @Column(name = "locked_until")
+    private Instant lockedUntil = null;
+
 }

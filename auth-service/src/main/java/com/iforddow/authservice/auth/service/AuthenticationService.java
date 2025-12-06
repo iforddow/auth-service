@@ -4,6 +4,8 @@ import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.factory.SessionFactory;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.auth.request.LoginRequest;
+import com.iforddow.authservice.common.exception.TooManyRequests;
+import com.iforddow.authservice.common.utility.CheckMax;
 import com.iforddow.authservice.common.utility.DeviceType;
 import com.iforddow.authservice.auth.validator.CredentialValidator;
 import com.iforddow.authservice.common.exception.BadRequestException;
@@ -16,10 +18,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 
 /**
@@ -36,9 +41,25 @@ public class AuthenticationService {
     private final AccountRepository accountRepository;
     private final SessionFactory sessionFactory;
     private final CredentialValidator credentialValidator;
+    private final CheckMax checkMax;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final AccountLockService accountLockService;
 
     @Value("${session.cookie.name}")
     private String cookieName;
+
+    // Properties for login attempt tracking
+    @Value("${redis.login.attempt.counter.prefix}")
+    private String loginAttemptCounterPrefix;
+
+    @Value("${redis.login.attempt.counter.ttl.seconds}")
+    private int loginAttemptCounterTtlSeconds;
+
+    @Value("${auth.max.login.attempts}")
+    private int maxLoginAttempts;
+
+    @Value("${auth.lockout.duration.minutes}")
+    private int lockoutDurationMinutes;
 
     /**
      * A method to handle account login.
@@ -59,8 +80,36 @@ public class AuthenticationService {
                 () -> new ResourceNotFoundException("Account email not found")
         );
 
-        // Validate credentials
+        // Check and handle account lock status
+        if(account.getLocked()) {
+            if(account.getLockedUntil() != null && Instant.now().isAfter(account.getLockedUntil())) {
+                accountLockService.unlockAccount(account);
+            }   else {
+                Instant lockedUntil = account.getLockedUntil();
+
+                throw new BadRequestException("Account is currently locked until: " + (lockedUntil != null ? lockedUntil.toString() : "INDEFINITE"));
+            }
+        }
+
+        // Check for maximum login attempts
+        String key = loginAttemptCounterPrefix + loginRequest.getEmail();
+
+        // If max attempts reached, lock the account
+        if(checkMax.getAttempts(key) >= maxLoginAttempts) {
+
+            Instant lockTime = Instant.now().plus(Duration.ofMinutes(lockoutDurationMinutes));
+
+            stringRedisTemplate.delete(key);
+            accountLockService.lockAccount(account, lockTime);
+
+            throw new TooManyRequests("Too many login attempts, account is now locked until: " + lockTime.toString());
+        }
+
+        // Validate credentials and handle login attempts
         if(!credentialValidator.validate(account, loginRequest.getPassword())) {
+
+            checkMax.increaseAttempts(key, loginAttemptCounterTtlSeconds);
+
             throw new InvalidCredentialsException("Invalid credentials");
         }
 

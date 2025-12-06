@@ -10,6 +10,7 @@ import com.iforddow.authservice.common.exception.PasswordValidationException;
 import com.iforddow.authservice.common.exception.ResourceNotFoundException;
 import com.iforddow.authservice.common.service.MailService;
 import com.iforddow.authservice.common.utility.AuthServiceUtility;
+import com.iforddow.authservice.common.utility.CheckMax;
 import com.iforddow.authservice.common.utility.CodeGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -40,12 +41,24 @@ public class PasswordService {
     private final MailService mailService;
     private final StringRedisTemplate stringRedisTemplate;
     private final SpringTemplateEngine templateEngine;
+    private final CheckMax checkMax;
 
+    // Properties for password reset codes
     @Value("${redis.password.reset.code.prefix}")
     private String resetCodePrefix;
 
     @Value("${redis.password.reset.code.ttl.seconds}")
     private int resetCodeTtlSeconds;
+
+    // Properties for limiting password reset attempts
+    @Value("${redis.password.reset.code.attempts.prefix}")
+    private String resetPasswordAttemptsPrefix;
+
+    @Value("${redis.password.reset.code.ttl.attempts.seconds}")
+    private int resetPasswordAttemptsTtlSeconds;
+
+    @Value("${auth.max.password.reset.requests.per.hour}")
+    private int maxPasswordResetRequestsPerHour;
 
     /**
     * A method to change the password of the currently authenticated account.
@@ -95,6 +108,13 @@ public class PasswordService {
 
         //Get account by ID
         Account account = accountRepository.findAccountByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Account with provided email not found"));
+
+        //Check to make sure max attempts not exceeded
+        String attemptsKey = resetPasswordAttemptsPrefix + account.getId();
+
+        if(checkMax.maxReached(attemptsKey, maxPasswordResetRequestsPerHour, resetPasswordAttemptsTtlSeconds)) {
+            throw new BadRequestException("Maximum password reset requests reached. Please try again later.");
+        }
 
         // Generate verification code
         String generatedVerificationCode = CodeGenerator.generateRandomCode();

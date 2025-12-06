@@ -2,8 +2,10 @@ package com.iforddow.authservice.auth.service;
 
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
+import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authservice.common.exception.ResourceNotFoundException;
 import com.iforddow.authservice.common.service.MailService;
+import com.iforddow.authservice.common.utility.CheckMax;
 import com.iforddow.authservice.common.utility.CodeGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,13 +30,16 @@ public class EmailVerificationService {
     private final StringRedisTemplate stringRedisTemplate;
     private final SpringTemplateEngine templateEngine;
     private final MailService mailService;
+    private final CheckMax checkMax;
 
+    // Properties for email verification codes
     @Value("${redis.email.verification.code.prefix}")
     private String verificationCodePrefix;
 
     @Value("${redis.email.verification.code.ttl.seconds}")
     private int verificationCodeTtlSeconds;
 
+    // Properties for limiting verification code requests
     @Value("${redis.email.verification.code.attempts.prefix}")
     private String verificationCodeAttemptsPrefix;
 
@@ -79,21 +84,9 @@ public class EmailVerificationService {
 
         //Check to make sure max attempts not exceeded
         String attemptsKey = verificationCodeAttemptsPrefix + email;
-        String attemptsValue = stringRedisTemplate.opsForValue().get(attemptsKey);
-        int attempts = attemptsValue != null ? Integer.parseInt(attemptsValue) : 0;
 
-        if (maxVerificationCodeRequestsPerHour != -1) {
-            if(attempts >= maxVerificationCodeRequestsPerHour) {
-                throw new ResourceNotFoundException("Maximum verification email attempts exceeded. Please try again later.");
-            }   else {
-                attempts++;
-                stringRedisTemplate.opsForValue().set(attemptsKey, String.valueOf(attempts));
-
-                Long currentTtl = stringRedisTemplate.getExpire(attemptsKey);
-                if (currentTtl == null || currentTtl == -1) {
-                    stringRedisTemplate.expireAt(attemptsKey, Instant.now().plusSeconds(verificationCodeAttemptsTtlSeconds));
-                }
-            }
+        if(checkMax.maxReached(attemptsKey, maxVerificationCodeRequestsPerHour, verificationCodeAttemptsTtlSeconds)) {
+            throw new BadRequestException("Maximum verification email attempts exceeded. Please try again later.");
         }
 
         String verificationCode = createEmailVerificationCode(email);
