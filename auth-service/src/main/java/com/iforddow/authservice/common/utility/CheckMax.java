@@ -1,7 +1,6 @@
 package com.iforddow.authservice.common.utility;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 

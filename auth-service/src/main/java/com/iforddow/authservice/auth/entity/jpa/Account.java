@@ -5,8 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -61,9 +59,6 @@ public class Account {
     @ColumnDefault("now()")
     @Column(name = "last_active", nullable = false)
     private Instant lastActive = Instant.now();
-
-    @Transient
-    private List<String> authorities = new ArrayList<>();
 
     @Builder.Default
     @ColumnDefault("null")

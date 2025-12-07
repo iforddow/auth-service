@@ -53,4 +53,26 @@ public class AccountLockService {
         account.setLockedUntil(null);
         accountRepository.save(account);
     }
+
+    /**
+    * A method to check if an account is locked. And if the lock time has expired,
+    * unlock the account.
+    *
+    * @param account The account to check.
+    * @return true if the account is locked, false otherwise.
+    *
+    * @author IFD
+    * @since 2025-12-05
+    * */
+    @Transactional
+    public boolean isAccountLocked(Account account) {
+        if(account.getLocked()) {
+            if(account.getLockedUntil() != null && Instant.now().isAfter(account.getLockedUntil())) {
+                unlockAccount(account);
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
 }
