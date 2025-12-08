@@ -1,5 +1,7 @@
 package com.iforddow.authservice.auth.service;
 
+import com.iforddow.authservice.application.events.authentication.AuthenticationFailedEvent;
+import com.iforddow.authservice.application.events.authentication.AuthenticationSuccessfulEvent;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.factory.SessionFactory;
 import com.iforddow.authservice.auth.request.LoginRequest;
@@ -12,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class AuthenticationService {
 
     private final SessionFactory sessionFactory;
     private final AuthenticationValidator authenticationValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${session.cookie.name}")
     private String cookieName;
@@ -44,35 +48,48 @@ public class AuthenticationService {
      */
     public String authenticate(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
 
-        Account account = authenticationValidator.validateAuthenticationRequest(loginRequest);
+        Account account = null;
 
-        // Create new session for the account
-        Session newSession = sessionFactory.createAccountSession(account, request);
+        try {
+            account = authenticationValidator.validateAuthenticationRequest(loginRequest);
 
-        // Create authentication token and set in security context
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                account.getId(), null, Collections.emptyList()
-        );
+            // Create new session for the account
+            Session newSession = sessionFactory.createAccountSession(account, request);
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+            // Create authentication token and set in security context
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    account.getId(), null, Collections.emptyList()
+            );
 
-        // Handle session token based on device type
-        if(loginRequest.getDeviceType().equals(DeviceType.WEB)) {
+            SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            // For web, set the session token in an HttpOnly cookie
-            Cookie sessionCookie = new Cookie(cookieName, newSession.getSessionId());
+            eventPublisher.publishEvent(new AuthenticationSuccessfulEvent(account, request));
 
-            sessionCookie.setHttpOnly(true);
-            sessionCookie.setPath("/");
-            sessionCookie.setMaxAge(31536000);
-            sessionCookie.setAttribute("SameSite", "Strict");
-            sessionCookie.setSecure(true);
+            // Handle session token based on device type
+            if(loginRequest.getDeviceType().equals(DeviceType.WEB)) {
 
-            response.addCookie(sessionCookie);
+                // For web, set the session token in an HttpOnly cookie
+                Cookie sessionCookie = new Cookie(cookieName, newSession.getSessionId());
 
-            return null;
-        } else {
-            return newSession.getSessionId();
+                sessionCookie.setHttpOnly(true);
+                sessionCookie.setPath("/");
+                sessionCookie.setMaxAge(31536000);
+                sessionCookie.setAttribute("SameSite", "Strict");
+                sessionCookie.setSecure(true);
+
+                response.addCookie(sessionCookie);
+
+                return null;
+            } else {
+                return newSession.getSessionId();
+            }
+        } catch (Exception e) {
+
+            if(account != null) {
+                eventPublisher.publishEvent(new AuthenticationFailedEvent(account, request));
+            }
+
+            throw e;
         }
 
     }

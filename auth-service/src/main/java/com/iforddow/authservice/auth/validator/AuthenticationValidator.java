@@ -41,7 +41,7 @@ public class AuthenticationValidator {
     @Value("${auth.lockout.duration.minutes}")
     private int lockoutDurationMinutes;
 
-    public Account validateAuthenticationRequest(LoginRequest loginRequest) {
+    public Account validateAuthenticationRequest(LoginRequest loginRequest) throws BadRequestException, InvalidCredentialsException, ResourceNotFoundException, TooManyRequests {
 
         // Ensure device type is valid
         if(!(loginRequest.getDeviceType() == DeviceType.WEB) && !loginRequest.getDeviceType().equals(DeviceType.MOBILE)) {
