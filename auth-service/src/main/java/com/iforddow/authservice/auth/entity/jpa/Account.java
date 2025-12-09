@@ -65,4 +65,9 @@ public class Account {
     @Column(name = "locked_until")
     private Instant lockedUntil = null;
 
+    @Builder.Default
+    @ColumnDefault("null")
+    @Column(name = "last_login")
+    private Instant lastLogin = null;
+
 }

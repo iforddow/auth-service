@@ -15,10 +15,9 @@ import java.util.UUID;
 @Table(name = "login_audit")
 public class LoginAudit {
     @Id
-    @Builder.Default
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
-    private UUID id = UUID.randomUUID();
+    private UUID id;
 
     @Column(name = "account_hash", nullable = false)
     private String accountHash;
@@ -48,11 +47,6 @@ public class LoginAudit {
 
     @Builder.Default
     @ColumnDefault("null")
-    @Column(name = "asn", length = 50)
-    private String asn = null;
-
-    @Builder.Default
-    @ColumnDefault("null")
     @Column(name = "device_id", length = 128)
     private String deviceId = null;
 
@@ -65,5 +59,15 @@ public class LoginAudit {
     @ColumnDefault("now()")
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "asn_num", nullable = false, length = 50)
+    private String asnNum = "Unknown";
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "asn_org", nullable = false)
+    private String asnOrg = "Unknown";
 
 }

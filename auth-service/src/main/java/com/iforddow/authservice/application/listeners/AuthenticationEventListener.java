@@ -5,12 +5,17 @@ import com.iforddow.authservice.application.events.authentication.Authentication
 import com.iforddow.authservice.auth.entity.entity.GeoLocation;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.entity.jpa.LoginAudit;
+import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.auth.repository.jpa.LoginAuditRepository;
+import com.iforddow.authservice.common.records.AsnInfo;
+import com.iforddow.authservice.common.service.GeoAsnService;
 import com.iforddow.authservice.common.service.GeoLocationService;
+import com.iforddow.authservice.common.utility.CookieUtility;
 import com.iforddow.authservice.common.utility.HashUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -25,27 +30,41 @@ public class AuthenticationEventListener {
     private final LoginAuditRepository loginAuditRepository;
     private final HashUtility hashUtility;
     private final GeoLocationService geoLocationService;
+    private final AccountRepository accountRepository;
+    private final CookieUtility cookieUtility;
+    private final GeoAsnService geoAsnService;
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAuthenticationSuccessfulEvent(AuthenticationSuccessfulEvent event) {
 
         Account account = event.account();
-        HttpServletRequest request = event.request();
 
-        String ipAddress = request.getRemoteAddr();
+        String ipAddress = event.ipAddress();
 
         GeoLocation location =  geoLocationService.getLocation(ipAddress);
 
+        Instant currentTime = Instant.now();
+
+        AsnInfo asnInfo = geoAsnService.lookup(ipAddress);
+
         LoginAudit loginAudit = LoginAudit.builder()
                 .accountHash(hashUtility.hmacSha256(account.getId().toString()))
-                .ipAddressHash(hashUtility.hmacSha256(request.getRemoteAddr()))
+                .ipAddressHash(hashUtility.hmacSha256(ipAddress))
                 .success(true)
                 .city(location.getCity())
                 .country(location.getCountry())
                 .countryCode(location.getCountryCode())
                 .region(location.getRegion())
-                .createdAt(Instant.now())
+                .createdAt(currentTime)
+                .asnNum(asnInfo.autonomousSystemNumber())
+                .asnOrg(asnInfo.autonomousSystemOrganization())
+                .deviceId("")
                 .build();
+
+        account.setLastLogin(currentTime);
+
+        accountRepository.save(account);
 
         loginAuditRepository.save(loginAudit);
 

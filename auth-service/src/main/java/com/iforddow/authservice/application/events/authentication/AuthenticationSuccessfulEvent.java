@@ -4,7 +4,7 @@ import com.iforddow.authservice.auth.entity.jpa.Account;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-public record AuthenticationSuccessfulEvent(Account account, HttpServletRequest request) {
+public record AuthenticationSuccessfulEvent(Account account, String ipAddress) {
 
     
 

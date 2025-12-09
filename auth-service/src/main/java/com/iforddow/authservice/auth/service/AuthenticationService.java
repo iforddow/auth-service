@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
@@ -46,6 +47,7 @@ public class AuthenticationService {
      * @author IFD
      * @since 2025-10-27
      */
+    @Transactional
     public String authenticate(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
 
         Account account = null;
@@ -62,8 +64,6 @@ public class AuthenticationService {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            eventPublisher.publishEvent(new AuthenticationSuccessfulEvent(account, request));
 
             // Handle session token based on device type
             if(loginRequest.getDeviceType().equals(DeviceType.WEB)) {
@@ -83,13 +83,12 @@ public class AuthenticationService {
             } else {
                 return newSession.getSessionId();
             }
-        } catch (Exception e) {
-
-            if(account != null) {
+        } finally {
+            if(account == null) {
                 eventPublisher.publishEvent(new AuthenticationFailedEvent(account, request));
+            } else {
+                eventPublisher.publishEvent(new AuthenticationSuccessfulEvent(account, request.getRemoteAddr()));
             }
-
-            throw e;
         }
 
     }
