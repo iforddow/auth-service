@@ -13,10 +13,7 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -124,17 +121,22 @@ public class SessionFactory {
         }
 
         // Enforce maximum sessions per account
-        List<Session> activeSessions = sessionRepository.findAllByAccountId(account.getId());
+        List<Session> activeSessions = new ArrayList<>(sessionRepository.findAllByAccountId(account.getId()));
 
         // If over the limit, delete the oldest sessions
-        while (activeSessions.size() > maxSessions && maxSessions != -1) {
-            // Find the oldest session
-            Session oldestSession = activeSessions.stream()
-                    .min(Comparator.comparing(Session::getCreatedAt))
-                    .orElseThrow(() -> new BadRequestException("Unable to enforce session limit"));
+        if(maxSessions != -1) {
+            while (activeSessions.size() >= maxSessions) {
+                // Find the oldest session
+                Session oldestSession = activeSessions.stream()
+                        .min(Comparator.comparing(Session::getCreatedAt))
+                        .orElseThrow(() -> new BadRequestException("Unable to enforce session limit"));
 
-            // Delete the oldest session
-            sessionRepository.delete(oldestSession.getSessionId());
+                // Delete the oldest session
+                sessionRepository.delete(oldestSession.getSessionId());
+
+                // Remove from session list
+                activeSessions.remove(oldestSession);
+            }
         }
 
         // Get information required for the session

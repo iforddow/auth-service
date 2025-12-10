@@ -85,7 +85,7 @@ public class AuthenticationService {
             }
         } finally {
             if(account == null) {
-                eventPublisher.publishEvent(new AuthenticationFailedEvent(account, request));
+                eventPublisher.publishEvent(new AuthenticationFailedEvent(account, request.getRemoteAddr()));
             } else {
                 eventPublisher.publishEvent(new AuthenticationSuccessfulEvent(account, request.getRemoteAddr()));
             }

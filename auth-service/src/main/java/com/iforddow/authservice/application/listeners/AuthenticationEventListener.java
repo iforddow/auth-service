@@ -39,13 +39,9 @@ public class AuthenticationEventListener {
     public void handleAuthenticationSuccessfulEvent(AuthenticationSuccessfulEvent event) {
 
         Account account = event.account();
-
         String ipAddress = event.ipAddress();
-
         GeoLocation location =  geoLocationService.getLocation(ipAddress);
-
         Instant currentTime = Instant.now();
-
         AsnInfo asnInfo = geoAsnService.lookup(ipAddress);
 
         LoginAudit loginAudit = LoginAudit.builder()
@@ -65,7 +61,6 @@ public class AuthenticationEventListener {
         account.setLastLogin(currentTime);
 
         accountRepository.save(account);
-
         loginAuditRepository.save(loginAudit);
 
     }
@@ -74,7 +69,7 @@ public class AuthenticationEventListener {
     public void handleAuthenticationFailedEvent(AuthenticationFailedEvent event) {
 
         Account account = event.account();
-        HttpServletRequest request = event.request();
+        String ipAddress = event.ipAddress();
 
     }
 

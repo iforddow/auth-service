@@ -145,21 +145,11 @@ public class SessionRepositoryImpl implements SessionRepository {
     @Override
     public void delete(String sessionId) {
 
-        System.out.println("Deleting session with ID (String): " + sessionId);
-
-        String hashedSessionId = hashUtility.hmacSha256(sessionId);
-
-        Session session = findById(hashedSessionId);
-
-        if(session == null) {
-            throw new ResourceNotFoundException("Session not found");
-        }
-
-        String key = authProperties.getSessionPrefix() + hashedSessionId;
+        String key = authProperties.getSessionPrefix() + sessionId;
         sessionRedisTemplate.delete(key);
 
-        String accountSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId();
-        stringRedisTemplate.opsForSet().remove(accountSessionsKey, hashedSessionId);
+        String accountSessionsKey = authProperties.getAccountSessionPrefix() + sessionId;
+        stringRedisTemplate.opsForSet().remove(accountSessionsKey, sessionId);
     }
 
     /**
@@ -172,13 +162,12 @@ public class SessionRepositoryImpl implements SessionRepository {
      * */
     @Override
     public void delete(Session session) {
-        String hashedSessionId = session.getSessionId();
 
-        String key = authProperties.getSessionPrefix() + hashedSessionId;
+        String key = authProperties.getSessionPrefix() + session.getSessionId();
         sessionRedisTemplate.delete(key);
 
         String accountSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId();
-        stringRedisTemplate.opsForSet().remove(accountSessionsKey, hashedSessionId);
+        stringRedisTemplate.opsForSet().remove(accountSessionsKey, session.getSessionId());
     }
 
     @Override

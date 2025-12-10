@@ -30,9 +30,6 @@ public class GeoAsnService {
 
     public AsnInfo lookup(String ip) {
 
-        String asnNumber = "Unknown";
-        String asnOrganization = "Unknown";
-
         try {
             InetAddress address = InetAddress.getByName(ip);
             AsnResponse response = databaseReader.asn(address);
@@ -41,8 +38,8 @@ public class GeoAsnService {
                 return null;
             }
 
-            asnNumber = response.getAutonomousSystemNumber().toString();
-            asnOrganization = response.getAutonomousSystemOrganization();
+            String asnNumber = response.getAutonomousSystemNumber().toString();
+            String asnOrganization = response.getAutonomousSystemOrganization();
 
             return new AsnInfo(
                     asnNumber,
@@ -51,8 +48,8 @@ public class GeoAsnService {
 
         } catch (Exception e) {
             return new AsnInfo(
-                    asnNumber,
-                    asnOrganization
+                    "Unknown",
+                    "Unknown"
             );
         }
     }
