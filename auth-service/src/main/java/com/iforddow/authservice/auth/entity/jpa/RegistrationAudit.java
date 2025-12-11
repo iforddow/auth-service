@@ -3,6 +3,8 @@ package com.iforddow.authservice.auth.entity.jpa;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -27,12 +29,6 @@ public class RegistrationAudit {
     @GeneratedValue
     @Column(name = "id", nullable = false)
     private UUID id;
-
-    @Column(name = "account_hash", nullable = false)
-    private String accountHash;
-
-    @Column(name = "ip_address_hash", nullable = false)
-    private String ipAddressHash;
 
     @ColumnDefault("'Unknown'")
     @Column(name = "country", nullable = false, length = 100)
@@ -73,5 +69,13 @@ public class RegistrationAudit {
     @ColumnDefault("'Unknown'")
     @Column(name = "country_code", nullable = false, length = 25)
     private String countryCode;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "account", nullable = false)
+    private Account account;
+
+    @Column(name = "ip_address", nullable = false, length = 100)
+    private String ipAddress;
 
 }

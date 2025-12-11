@@ -3,6 +3,8 @@ package com.iforddow.authservice.auth.entity.jpa;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -19,43 +21,56 @@ public class TrustedDevice {
     @Column(name = "device_id", nullable = false)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
-
+    @Builder.Default
     @Column(name = "device_type", length = 50)
-    private String deviceType;
+    private String deviceType = null;
 
+    @Builder.Default
     @Column(name = "os_family", length = 100)
-    private String osFamily;
+    private String osFamily = null;
 
+    @Builder.Default
     @Column(name = "browser_family", length = 100)
-    private String browserFamily;
+    private String browserFamily = null;
 
+    @Builder.Default
     @Column(name = "first_ip")
-    private String firstIp;
+    private String firstIp = null;
 
+    @Builder.Default
     @Column(name = "last_ip")
-    private String lastIp;
+    private String lastIp = null;
 
+    @Builder.Default
     @Column(name = "first_asn")
-    private String firstAsn;
+    private String firstAsn = null;
 
+    @Builder.Default
     @Column(name = "last_asn")
-    private String lastAsn;
+    private String lastAsn = null;
 
+    @Builder.Default
     @ColumnDefault("now()")
     @Column(name = "last_seen_at", nullable = false)
-    private Instant lastSeenAt;
+    private Instant lastSeenAt = Instant.now();
 
+    @Builder.Default
     @ColumnDefault("false")
     @Column(name = "revoked", nullable = false)
     private Boolean revoked = false;
 
+    @Builder.Default
     @Column(name = "revoked_at")
-    private Instant revokedAt;
+    private Instant revokedAt = Instant.now();
 
+    @Builder.Default
     @ColumnDefault("now()")
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
 }

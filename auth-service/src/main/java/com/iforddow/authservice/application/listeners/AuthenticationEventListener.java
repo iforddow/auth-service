@@ -12,7 +12,6 @@ import com.iforddow.authservice.common.service.GeoAsnService;
 import com.iforddow.authservice.common.service.GeoLocationService;
 import com.iforddow.authservice.common.utility.CookieUtility;
 import com.iforddow.authservice.common.utility.HashUtility;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -45,8 +44,8 @@ public class AuthenticationEventListener {
         AsnInfo asnInfo = geoAsnService.lookup(ipAddress);
 
         LoginAudit loginAudit = LoginAudit.builder()
-                .accountHash(hashUtility.hmacSha256(account.getId().toString()))
-                .ipAddressHash(hashUtility.hmacSha256(ipAddress))
+                .account(event.account())
+                .ipAddress(ipAddress)
                 .success(true)
                 .city(location.getCity())
                 .country(location.getCountry())

@@ -6,7 +6,6 @@ import com.iforddow.authservice.auth.entity.entity.GeoLocation;
 import com.iforddow.authservice.auth.entity.jpa.RegistrationAudit;
 import com.iforddow.authservice.auth.repository.jpa.RegistrationAuditRepository;
 import com.iforddow.authservice.common.service.GeoLocationService;
-import com.iforddow.authservice.common.utility.HashUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,6 @@ import java.time.Instant;
 @Slf4j
 public class RegistrationAuditListener {
 
-    private final HashUtility hashUtility;
     private final GeoLocationService geoLocationService;
     private final RegistrationAuditRepository registrationAuditRepository;
 
@@ -52,15 +50,9 @@ public class RegistrationAuditListener {
             Account account = registrationEvent.account();
             HttpServletRequest request = registrationEvent.request();
 
-            // Hashed account ID
-            String accountHash = hashUtility.hmacSha256(account.getId().toString());
-
             String ipAddress = request.getRemoteAddr();
 
             GeoLocation geoLocation = geoLocationService.getLocation(ipAddress);
-
-            // Get IP address
-            String hashedIp = hashUtility.hmacSha256(ipAddress);
 
             // Parse User-Agent and get required info
             Parser uaParser = new Parser();
@@ -74,8 +66,8 @@ public class RegistrationAuditListener {
 
             // Create and save RegistrationAudit record
             RegistrationAudit registrationAudit = RegistrationAudit.builder()
-                    .accountHash(accountHash)
-                    .ipAddressHash(hashedIp)
+                    .account(account)
+                    .ipAddress(ipAddress)
                     .country(geoLocation.getCountry())
                     .countryCode(geoLocation.getCountryCode())
                     .region(geoLocation.getCity())
@@ -91,7 +83,7 @@ public class RegistrationAuditListener {
             registrationAuditRepository.save(registrationAudit);
 
             // Log success
-            log.info("RegistrationAudit saved for account {}", accountHash);
+            log.info("RegistrationAudit saved for account {}", account.getId());
 
         } catch (Exception e) {
             // Log any errors
