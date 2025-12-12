@@ -1,6 +1,7 @@
 package com.iforddow.authservice.application.listeners;
 
 import com.iforddow.authservice.application.events.RegistrationEvent;
+import com.iforddow.authservice.auth.entity.entity.ClientInfo;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.entity.entity.GeoLocation;
 import com.iforddow.authservice.auth.entity.jpa.RegistrationAudit;
@@ -54,15 +55,7 @@ public class RegistrationAuditListener {
 
             GeoLocation geoLocation = geoLocationService.getLocation(ipAddress);
 
-            // Parse User-Agent and get required info
-            Parser uaParser = new Parser();
-            Client agent = uaParser.parse(registrationEvent.request().getHeader("User-Agent"));
-
-            String deviceType = agent.device.family;
-            String osType = agent.os.family;
-            String osVersion = agent.os.major + "." + agent.os.minor + "." + agent.os.patch;
-            String browserType = agent.userAgent.family;
-            String browserVersion = agent.userAgent.major + "." + agent.userAgent.minor + "." + agent.userAgent.patch;
+            ClientInfo clientInfo = new ClientInfo(registrationEvent.request().getHeader("User-Agent"));
 
             // Create and save RegistrationAudit record
             RegistrationAudit registrationAudit = RegistrationAudit.builder()
@@ -72,11 +65,11 @@ public class RegistrationAuditListener {
                     .countryCode(geoLocation.getCountryCode())
                     .region(geoLocation.getCity())
                     .city(geoLocation.getRegion())
-                    .deviceType(deviceType)
-                    .osType(osType)
-                    .osVersion(osVersion)
-                    .browserType(browserType)
-                    .browserVersion(browserVersion)
+                    .deviceType(clientInfo.getDeviceType())
+                    .osType(clientInfo.getOsType())
+                    .osVersion(clientInfo.getOsVersion())
+                    .browserType(clientInfo.getBrowserType())
+                    .browserVersion(clientInfo.getBrowserVersion())
                     .timestamp(Instant.now())
                     .build();
 

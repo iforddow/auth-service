@@ -47,8 +47,8 @@ public class Account {
 
     @Builder.Default
     @ColumnDefault("false")
-    @Column(name = "user_verified", nullable = false)
-    private Boolean userVerified = false;
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
 
     @Builder.Default
     @ColumnDefault("now()")
@@ -69,5 +69,10 @@ public class Account {
     @ColumnDefault("null")
     @Column(name = "last_login")
     private Instant lastLogin = null;
+
+    @Builder.Default
+    @ColumnDefault("false")
+    @Column(name = "mfa_enabled", nullable = false)
+    private Boolean mfaEnabled = false;
 
 }

@@ -4,7 +4,6 @@ import com.iforddow.authservice.application.events.RegistrationEvent;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.service.EmailVerificationService;
 import com.iforddow.authservice.auth.service.RegistrationService;
-import com.iforddow.authservice.common.service.MailService;
 import com.iforddow.authservice.common.service.RabbitSenderService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;

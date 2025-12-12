@@ -22,18 +22,6 @@ public class TrustedDevice {
     private UUID id;
 
     @Builder.Default
-    @Column(name = "device_type", length = 50)
-    private String deviceType = null;
-
-    @Builder.Default
-    @Column(name = "os_family", length = 100)
-    private String osFamily = null;
-
-    @Builder.Default
-    @Column(name = "browser_family", length = 100)
-    private String browserFamily = null;
-
-    @Builder.Default
     @Column(name = "first_ip")
     private String firstIp = null;
 
@@ -61,7 +49,7 @@ public class TrustedDevice {
 
     @Builder.Default
     @Column(name = "revoked_at")
-    private Instant revokedAt = Instant.now();
+    private Instant revokedAt = null;
 
     @Builder.Default
     @ColumnDefault("now()")
@@ -72,5 +60,30 @@ public class TrustedDevice {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "os_type", nullable = false, length = 50)
+    private String osType = "Unknown";
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "os_version", nullable = false, length = 50)
+    private String osVersion = "Unknown";
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "browser_type", nullable = false, length = 50)
+    private String browserType = "Unknown";
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "browser_version", nullable = false, length = 50)
+    private String browserVersion = "Unknown";
+
+    @Builder.Default
+    @ColumnDefault("'Unknown'")
+    @Column(name = "device_type", nullable = false, length = 50)
+    private String deviceType = "Unknown";
 
 }

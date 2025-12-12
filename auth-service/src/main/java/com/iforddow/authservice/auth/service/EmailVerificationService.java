@@ -67,7 +67,7 @@ public class EmailVerificationService {
         }
 
         Account account = accountRepository.findAccountByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Account with provided email not found"));
-        account.setUserVerified(true);
+        account.setEmailVerified(true);
 
         accountRepository.save(account);
     }
