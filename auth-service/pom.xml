@@ -201,7 +201,7 @@
         <dependency>
             <groupId>com.iforddow</groupId> <!-- The groupId of your starter -->
             <artifactId>auth-session-spring-boot-starter</artifactId> <!-- The artifactId of your starter -->
-            <version>0.0.1</version> <!-- The version of your starter -->
+            <version>0.0.2</version> <!-- The version of your starter -->
         </dependency>
     </dependencies>
 

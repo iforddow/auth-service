@@ -48,10 +48,17 @@ public class AuthenticationValidator {
             throw new BadRequestException("Invalid device type");
         }
 
+        Account account;
+
         // Ensure account exists
-        Account account = accountRepository.findAccountByEmail(loginRequest.getEmail()).orElseThrow(
-                () -> new ResourceNotFoundException("Account email not found")
-        );
+        // Check to ensure the account doesn't exist
+        if(accountRepository.findAccountsByEmail(loginRequest.getEmail()).isEmpty()) {
+            throw new ResourceNotFoundException("Account email not found");
+        } else if(accountRepository.findAccountsByEmail(loginRequest.getEmail()).size() > 1) {
+            throw new BadRequestException("Multiple accounts found with the same email");
+        } else {
+            account = accountRepository.findAccountsByEmail(loginRequest.getEmail()).getFirst();
+        }
 
         // Check and handle account lock status
         if(accountLockService.isAccountLocked(account)) {

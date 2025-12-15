@@ -4,7 +4,9 @@ import com.iforddow.authservice.application.events.RegistrationEvent;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import com.iforddow.authservice.auth.repository.jpa.AccountRepository;
 import com.iforddow.authservice.auth.request.RegisterRequest;
+import com.iforddow.authservice.auth.validator.RegistrationValidator;
 import com.iforddow.authservice.common.service.MailService;
+import com.iforddow.authsession.utility.SessionFilterUtility;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -32,6 +34,8 @@ public class RegistrationService {
     private final ApplicationEventPublisher eventPublisher;
     private final SpringTemplateEngine templateEngine;
     private final MailService mailService;
+    private final RegistrationValidator registrationValidator;
+    private final SessionFilterUtility sessionFilterUtility;
 
     @Value("${new.account.registration}")
     private String newAccountRegistrationSubject;
@@ -46,8 +50,7 @@ public class RegistrationService {
     @Transactional
     public void register(RegisterRequest registerRequest, HttpServletRequest httpRequest) {
 
-        // If we get to this point, all validations have passed, and we
-        // are ready to create the new account.
+        registrationValidator.validateRegistrationRequest(registerRequest, sessionFilterUtility.getIncomingSessionId(httpRequest));
 
         // Create a new account
         Account account = Account.builder()

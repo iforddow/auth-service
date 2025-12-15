@@ -1,10 +1,10 @@
 package com.iforddow.authservice.auth.factory;
 
 import com.iforddow.authservice.auth.entity.jpa.Account;
-import com.iforddow.authservice.auth.repository.redis.SessionRepositoryImpl;
+import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authsession.entity.Session;
-import com.iforddow.authsession.utility.FilterUtility;
+import com.iforddow.authsession.utility.SessionFilterUtility;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,8 +28,8 @@ public class SessionFactory {
     @Value("${auth.max.sessions}")
     private int maxSessions;
 
-    private final SessionRepositoryImpl sessionRepository;
-    private final FilterUtility filterUtility;
+    private final SessionRepository sessionRepository;
+    private final SessionFilterUtility sessionFilterUtility;
 
     /**
      * A static factory method to create a new Session instance.
@@ -51,7 +51,6 @@ public class SessionFactory {
                 .sessionId(generateSessionId())
                 .accountId(accountId)
                 .createdAt(now)
-                .ip(ip)
                 .userAgent(userAgent)
                 .expiresAt(now.plus(ttl))
                 .hardExpiration(now.plus(hardExpiration))
@@ -77,7 +76,6 @@ public class SessionFactory {
                 .sessionId(oldSession.getSessionId())
                 .accountId(oldSession.getAccountId())
                 .createdAt(oldSession.getCreatedAt())
-                .ip(oldSession.getIp())
                 .userAgent(oldSession.getUserAgent())
                 .expiresAt(now.plus(ttl))
                 .hardExpiration(oldSession.getHardExpiration())
@@ -114,7 +112,7 @@ public class SessionFactory {
      * */
     public Session createAccountSession(Account account, HttpServletRequest request) {
 
-        String sessionId = filterUtility.getIncomingSessionId(request);
+        String sessionId = sessionFilterUtility.getIncomingSessionId(request);
 
         if(sessionId != null) {
             throw new BadRequestException("Cannot create session when one already exists");

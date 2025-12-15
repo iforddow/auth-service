@@ -57,11 +57,9 @@ public class RegistrationValidator {
         }
 
         // Check to ensure the account doesn't exist
-        accountRepository.findAccountByEmail(registerRequest.getEmail()).ifPresent(
-                account -> {
-                    errors.add("An account with this email already exists.");
-                }
-        );
+        if(!accountRepository.findAccountsByEmail(registerRequest.getEmail()).isEmpty()) {
+            errors.add("An account with this email already exists.");
+        }
 
         if(!errors.isEmpty()) {
 

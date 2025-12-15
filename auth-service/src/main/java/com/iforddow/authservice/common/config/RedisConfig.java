@@ -21,7 +21,6 @@ import java.time.Duration;
 @Configuration
 public class RedisConfig {
 
-
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()

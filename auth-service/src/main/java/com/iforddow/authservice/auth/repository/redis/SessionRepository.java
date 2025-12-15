@@ -1,10 +1,8 @@
 package com.iforddow.authservice.auth.repository.redis;
 
-import com.iforddow.authservice.common.exception.ResourceNotFoundException;
 import com.iforddow.authservice.common.utility.HashUtility;
-import com.iforddow.authsession.common.AuthProperties;
+import com.iforddow.authsession.common.SessionProperties;
 import com.iforddow.authsession.entity.Session;
-import com.iforddow.authsession.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,9 +23,9 @@ import java.util.UUID;
 * */
 @Repository
 @RequiredArgsConstructor
-public class SessionRepositoryImpl implements SessionRepository {
+public class SessionRepository {
 
-    private final AuthProperties authProperties;
+    private final SessionProperties sessionProperties;
     private final RedisTemplate<String,Session> sessionRedisTemplate;
     private final StringRedisTemplate stringRedisTemplate;
     private final HashUtility hashUtility;
@@ -41,12 +39,11 @@ public class SessionRepositoryImpl implements SessionRepository {
     * @author IFD
     * @since 2025-11-30
     * */
-    @Override
     public Session findById(String sessionId) {
 
         String hashedSessionId = hashUtility.hmacSha256(sessionId);
 
-        String key = authProperties.getSessionPrefix() + hashedSessionId;
+        String key = sessionProperties.getSessionPrefix() + hashedSessionId;
         return sessionRedisTemplate.opsForValue().get(key);
     }
 
@@ -58,21 +55,19 @@ public class SessionRepositoryImpl implements SessionRepository {
     * @author IFD
     * @since 2025-11-30
     * */
-    @Override
     public void save(Session session) {
 
         Session newSession = new Session(
                 hashUtility.hmacSha256(session.getSessionId()),
                 session.getAccountId(),
                 session.getCreatedAt(),
-                session.getIp(),
                 session.getUserAgent(),
                 session.getExpiresAt(),
                 session.getHardExpiration()
         );
 
-        String sessionKey = authProperties.getSessionPrefix() + newSession.getSessionId();
-        String userSessionsKey = authProperties.getAccountSessionPrefix() + newSession.getAccountId().toString();
+        String sessionKey = sessionProperties.getSessionPrefix() + newSession.getSessionId();
+        String userSessionsKey = sessionProperties.getAccountSessionPrefix() + newSession.getAccountId().toString();
 
         // Save session object in Redis
         sessionRedisTemplate.opsForValue().set(sessionKey, newSession);
@@ -92,9 +87,8 @@ public class SessionRepositoryImpl implements SessionRepository {
     * @author IFD
     * @since 2025-11-30
     * */
-    @Override
     public boolean exists(String sessionId) {
-        return sessionRedisTemplate.hasKey(authProperties.getSessionPrefix() + sessionId);
+        return sessionRedisTemplate.hasKey(sessionProperties.getSessionPrefix() + sessionId);
     }
 
     /**
@@ -108,7 +102,7 @@ public class SessionRepositoryImpl implements SessionRepository {
      * */
     public List<Session> findAllByAccountId(UUID accountId) {
         // Retrieve all session IDs for the given account ID
-        Set<String> sessionIds = stringRedisTemplate.opsForSet().members(authProperties.getAccountSessionPrefix() + accountId.toString());
+        Set<String> sessionIds = stringRedisTemplate.opsForSet().members(sessionProperties.getAccountSessionPrefix() + accountId.toString());
 
         // If no session IDs found, return empty list
         if (sessionIds == null || sessionIds.isEmpty()) {
@@ -117,7 +111,7 @@ public class SessionRepositoryImpl implements SessionRepository {
 
         // Construct session keys and retrieve session objects
         List<String> sessionKeys = sessionIds.stream()
-                .map(id -> authProperties.getSessionPrefix() + id)
+                .map(id -> sessionProperties.getSessionPrefix() + id)
                 .toList();
 
         // Bulk get sessions from Redis
@@ -142,13 +136,12 @@ public class SessionRepositoryImpl implements SessionRepository {
      * @author IFD
      * @since 2025-11-30
      * */
-    @Override
     public void delete(String sessionId) {
 
-        String key = authProperties.getSessionPrefix() + sessionId;
+        String key = sessionProperties.getSessionPrefix() + sessionId;
         sessionRedisTemplate.delete(key);
 
-        String accountSessionsKey = authProperties.getAccountSessionPrefix() + sessionId;
+        String accountSessionsKey = sessionProperties.getAccountSessionPrefix() + sessionId;
         stringRedisTemplate.opsForSet().remove(accountSessionsKey, sessionId);
     }
 
@@ -160,17 +153,15 @@ public class SessionRepositoryImpl implements SessionRepository {
      * @author IFD
      * @since 2025-11-30
      * */
-    @Override
     public void delete(Session session) {
 
-        String key = authProperties.getSessionPrefix() + session.getSessionId();
+        String key = sessionProperties.getSessionPrefix() + session.getSessionId();
         sessionRedisTemplate.delete(key);
 
-        String accountSessionsKey = authProperties.getAccountSessionPrefix() + session.getAccountId();
+        String accountSessionsKey = sessionProperties.getAccountSessionPrefix() + session.getAccountId();
         stringRedisTemplate.opsForSet().remove(accountSessionsKey, session.getSessionId());
     }
 
-    @Override
     public void deleteAllByAccountId(UUID accountId) {
 
         List<Session> sessions = findAllByAccountId(accountId);

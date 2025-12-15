@@ -4,6 +4,12 @@ import lombok.Data;
 import ua_parser.Client;
 import ua_parser.Parser;
 
+/**
+* A class representing client information parsed from a User-Agent string.
+*
+* @author IFD
+* @since 2025-12-12
+* */
 @Data
 public class ClientInfo {
 
@@ -13,6 +19,14 @@ public class ClientInfo {
     String browserType;
     String browserVersion;
 
+    /**
+    * A constructor that parses the User-Agent string to extract client information.
+    *
+    * @param requestAgent The User-Agent string from the HTTP request header.
+    *
+    * @author IFD
+    * @since 2025-12-12
+    * */
     public ClientInfo(String requestAgent) {
 
         Parser parser = new Parser();

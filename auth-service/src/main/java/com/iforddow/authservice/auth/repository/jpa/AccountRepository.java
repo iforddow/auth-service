@@ -3,6 +3,7 @@ package com.iforddow.authservice.auth.repository.jpa;
 import com.iforddow.authservice.auth.entity.jpa.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,5 +18,7 @@ import java.util.UUID;
 public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     Optional<Account> findAccountByEmail(String email);
+
+    List<Account> findAccountsByEmail(String email);
 
 }

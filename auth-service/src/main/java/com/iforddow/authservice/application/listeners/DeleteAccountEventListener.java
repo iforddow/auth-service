@@ -1,7 +1,7 @@
 package com.iforddow.authservice.application.listeners;
 
 import com.iforddow.authservice.application.events.DeleteAccountEvent;
-import com.iforddow.authservice.auth.repository.redis.SessionRepositoryImpl;
+import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import com.iforddow.authservice.common.service.RabbitSenderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class DeleteAccountEventListener {
 
     private final RabbitSenderService rabbitSenderService;
-    private final SessionRepositoryImpl sessionRepository;
+    private final SessionRepository sessionRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDeleteAccountEvent(DeleteAccountEvent event) {

@@ -11,6 +11,10 @@ import java.util.UUID;
 @Repository
 public interface TrustedDeviceRepository extends JpaRepository<TrustedDevice, UUID> {
 
-    List<TrustedDevice> findTrustedDeviceByAccount(Account account);
+    TrustedDevice findTrustedDeviceByAccount(Account account);
+
+    List<TrustedDevice> findTrustedDevicesByAccount(Account account);
+
+    TrustedDevice findTrustedDeviceById(UUID id);
 
 }

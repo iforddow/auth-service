@@ -61,7 +61,110 @@ public class TrustedDeviceService {
                 .revokedAt(null)
                 .createdAt(Instant.now())
                 .build();
+    }
 
+    /**
+    * A method to revoke a trusted device for an account.
+    *
+    * @param account The account to revoke the trusted device for.
+    * @param trustedDeviceId The identifier of the device to revoke.
+    *
+    * @author IFD
+    * @since 2025-12-12
+    * */
+    @Transactional
+    public void revokeTrustedDevice(Account account, UUID trustedDeviceId) {
+        if(account == null) {
+            return;
+        }
+
+        TrustedDevice trustedDevice = trustedDeviceRepository.findTrustedDeviceById(trustedDeviceId);
+
+        if(trustedDevice == null) {
+            return;
+        }
+
+        if(!trustedDevice.getAccount().equals(account)) {
+            return;
+        }
+
+        trustedDevice.setRevoked(true);
+        trustedDevice.setRevokedAt(Instant.now());
+
+        trustedDeviceRepository.save(trustedDevice);
+    }
+
+    /**
+    * A method to revoke all trusted devices for an account.
+    *
+    * @param account The account to revoke all trusted devices for.
+    *
+    * @author IFD
+    * @since 2025-12-12
+    * */
+    @Transactional
+    public void revokeAllTrustedDevices(Account account) {
+        if(account == null) {
+            return;
+        }
+
+        List<TrustedDevice> trustedDevices = trustedDeviceRepository.findTrustedDevicesByAccount(account);
+
+        if(trustedDevices == null || trustedDevices.isEmpty()) {
+            return;
+        }
+
+        for(TrustedDevice trustedDevice : trustedDevices) {
+            trustedDevice.setRevoked(true);
+            trustedDevice.setRevokedAt(Instant.now());
+            trustedDeviceRepository.save(trustedDevice);
+        }
+    }
+
+    /**
+    * A method to get all trusted devices for an account.
+    *
+    * @param account The account to get the trusted devices for.
+    * @return A list of trusted devices for the account.
+    *
+    * @author IFD
+    * @since 2025-12-12
+    * */
+    @Transactional
+    public List<TrustedDevice> getTrustedDevicesForAccount(Account account) {
+        if(account == null) {
+            return List.of();
+        }
+
+        return trustedDeviceRepository.findTrustedDevicesByAccount(account);
+    }
+
+    /*
+    * A method to delete a trusted device for an account.
+    *
+    * @param account The account to delete the trusted device for.
+    * @param trustedDeviceId The identifier of the device to delete.
+    *
+    * @author IFD
+    * @since 2025-12-12
+    * */
+    @Transactional
+    public void deleteTrustedDevice(Account account, UUID trustedDeviceId) {
+        if(account == null) {
+            return;
+        }
+
+        TrustedDevice trustedDevice = trustedDeviceRepository.findTrustedDeviceById(trustedDeviceId);
+
+        if(trustedDevice == null) {
+            return;
+        }
+
+        if(!trustedDevice.getAccount().equals(account)) {
+            return;
+        }
+
+        trustedDeviceRepository.delete(trustedDevice);
     }
 
     /**
@@ -79,19 +182,13 @@ public class TrustedDeviceService {
             return false;
         }
 
-        List<TrustedDevice> trustedDevices = trustedDeviceRepository.findTrustedDeviceByAccount(account);
+        TrustedDevice trustedDevice = trustedDeviceRepository.findTrustedDeviceById(trustedDeviceId);
 
-        if(trustedDevices == null || trustedDevices.isEmpty()) {
+        if(trustedDevice == null) {
             return false;
         }
 
-        for(TrustedDevice trustedDevice : trustedDevices) {
-            if(trustedDevice.getId().equals(trustedDeviceId)) {
-                return true;
-            }
-        }
-
-        return false;
+        return trustedDevice.getAccount().equals(account) && !trustedDevice.getRevoked();
     }
 
 }

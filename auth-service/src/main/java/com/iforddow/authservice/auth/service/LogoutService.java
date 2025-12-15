@@ -1,12 +1,12 @@
 package com.iforddow.authservice.auth.service;
 
-import com.iforddow.authservice.auth.repository.redis.SessionRepositoryImpl;
+import com.iforddow.authservice.auth.repository.redis.SessionRepository;
 import com.iforddow.authservice.auth.request.LogoutRequest;
 import com.iforddow.authservice.common.exception.BadRequestException;
 import com.iforddow.authservice.common.utility.AuthServiceUtility;
-import com.iforddow.authsession.common.AuthProperties;
+import com.iforddow.authsession.common.SessionProperties;
 import com.iforddow.authsession.entity.Session;
-import com.iforddow.authsession.utility.FilterUtility;
+import com.iforddow.authsession.utility.SessionFilterUtility;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,9 +26,9 @@ import java.util.UUID;
 @Service
 public class LogoutService {
 
-    private final FilterUtility filterUtility;
-    private final SessionRepositoryImpl sessionRepository;
-    private final AuthProperties authProperties;
+    private final SessionFilterUtility sessionFilterUtility;
+    private final SessionRepository sessionRepository;
+    private final SessionProperties sessionProperties;
 
     /**
      * A method to handle account logout.
@@ -43,7 +43,7 @@ public class LogoutService {
         // Use try-finally to ensure cookie is removed
         try {
 
-            String sessionId = filterUtility.getIncomingSessionId(request);
+            String sessionId = sessionFilterUtility.getIncomingSessionId(request);
 
             // Check user has valid session
             if (AuthServiceUtility.isNullOrEmpty(sessionId)) {
@@ -83,7 +83,7 @@ public class LogoutService {
             // If the account is on mobile this cookie won't exist,
             // but this won't cause any issues.
 
-            Cookie cookie = new Cookie(authProperties.getCookieName(), null);
+            Cookie cookie = new Cookie(sessionProperties.getCookieName(), null);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             cookie.setMaxAge(0);

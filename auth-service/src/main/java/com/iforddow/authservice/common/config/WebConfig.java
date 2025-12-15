@@ -15,18 +15,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${api.prefix}")
-    private String apiPrefix;
-
-    /**
-    * Override default path. Adding a simple prefix of "/api/auth"
-    *
-    * @author IFD
-    * @since 2025-10-27
-    * */
-    @Override
-    public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.addPathPrefix(apiPrefix, c -> c.isAnnotationPresent(RestController.class));
-    }
+//    @Value("${api.prefix}")
+//    private String apiPrefix;
+//
+//    /**
+//    * Override default path. Adding a simple prefix of "/api/auth"
+//    *
+//    * @author IFD
+//    * @since 2025-10-27
+//    * */
+//    @Override
+//    public void configurePathMatch(PathMatchConfigurer configurer) {
+//        configurer.addPathPrefix(apiPrefix, c -> c.isAnnotationPresent(RestController.class));
+//    }
 
 }
